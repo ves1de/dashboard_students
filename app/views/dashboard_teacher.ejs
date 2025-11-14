@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title><%= title %></title>
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+	<div>Дашборд преподавателя</div>
+	<div class="nav">
+		<form class="inline" method="get" action="/dashboard" style="display:flex;align-items:center;gap:8px;">
+			<input type="hidden" name="offset" value="<%= offset %>">
+			<button class="btn secondary" name="dir" value="prev">«</button>
+			<input type="number" name="amount" value="<%= amount || 1 %>" min="1" style="width:64px">
+			<span><small class="muted">Неделя: <%= weekRangeLabel %></small></span>
+			<button class="btn secondary" name="dir" value="next">»</button>
+		</form>
+		<button class="btn link" id="themeToggle" type="button" title="Переключить тему">🌙</button>
+		<a href="https://uni-dubna.ru/" target="_blank" rel="noopener" class="btn link">Университет</a>
+		<span><small class="muted"><%= currentUser.fullName %> • предмет: <strong><%= mySubject %></strong></small></span>
+		<a href="/logout">Выйти</a>
+	</div>
+</header>
+<div class="container">
+	<div class="grid">
+		<div class="card">
+			<div class="section-title"><h3>1. Расписание</h3></div>
+			<% const dayOrder = ['mon','tue','wed','thu','fri','sat','sun']; const dayLabel = {mon:'Пн',tue:'Вт',wed:'Ср',thu:'Чт',fri:'Пт',sat:'Сб',sun:'Вс'}; %>
+			<% dayOrder.forEach(d => { const items = schedule.filter(s => s.dayOfWeek === d); if (!items.length) return; %>
+				<h4><%= dayLabel[d] %></h4>
+				<table class="table">
+					<thead><tr><th>Время</th><th>Предмет</th><th>Группа</th><th>Ауд./Преп.</th></tr></thead>
+					<tbody>
+						<% items.forEach(it => { const isMine = it.subject === mySubject; %>
+							<tr class="<%= isMine ? 'highlight' : '' %>">
+								<td><%= it.startTime %> - <%= it.endTime %></td>
+								<td><%= it.subject %> <%- (isMine ? '<span class="badge teacher">моё</span>' : '') %></td>
+								<td><%= it.groupName %></td>
+								<td><small class="muted"><%= it.room || '-' %> • <%= it.teacherName || '-' %></small></td>
+							</tr>
+						<% }) %>
+					</tbody>
+				</table>
+			<% }) %>
+		</div>
+		<div class="card">
+			<div class="section-title"><h3>2. ДЗ (моё)</h3></div>
+			<h4>Добавить ДЗ</h4>
+			<form method="post" action="/assignments/create">
+				<label>Группа (4 цифры)</label>
+				<select id="groupSelect" name="groupName" required>
+					<option value="">— выберите группу —</option>
+					<% (groups || []).forEach(g => { %>
+						<option value="<%= g %>"><%= g %></option>
+					<% }) %>
+				</select>
+				<label>Предмет</label>
+				<input name="subjectText" placeholder="Например: Линейная алгебра" required />
+				<label>Пара (фильтруется по выбранной группе)</label>
+				<select id="pairSelect" name="scheduleId" required>
+					<option value="">— выберите пару —</option>
+					<% schedule.forEach(s => { %>
+						<option data-group="<%= s.groupName %>" value="<%= s.id %>"><%= s.groupName %> • <%= s.dayOfWeek %> • <%= s.startTime %>-<%= s.endTime %></option>
+					<% }) %>
+				</select>
+				<label>Задание</label>
+				<textarea name="homework" required></textarea>
+				<label>Дедлайн</label>
+				<input type="datetime-local" name="dueDate" required />
+				<div style="margin-top:8px"><button class="btn" type="submit">Создать</button></div>
+			</form>
+			<script>
+			(function(){
+				var g = document.getElementById('groupSelect');
+				var p = document.getElementById('pairSelect');
+				function filterPairs(){
+					var val = g.value;
+					Array.from(p.options).forEach(function(opt){
+						if (!opt.value) return;
+						opt.hidden = (val && opt.getAttribute('data-group') !== val);
+					});
+				}
+				g && g.addEventListener('change', filterPairs);
+				filterPairs();
+			})();
+			</script>
+
+			<h4 style="margin-top:16px;">Список</h4>
+			<% if (!assignments.length) { %>
+				<p><small class="muted">Пока нет ваших заданий в выбранную неделю</small></p>
+			<% } %>
+			<% assignments.forEach(a => { %>
+				<div style="border-bottom:1px solid #eee; padding:8px 0;">
+					<form class="inline" method="post" action="/assignments/<%= a.id %>/update">
+						<div><strong><%= a.displaySubject %></strong> • <%= a.groupName %> • <%= a.dayOfWeek %> • <%= a.startTime %>-<%= a.endTime %></div>
+						<label>Предмет</label>
+						<input name="subjectText" value="<%= a.subjectText || a.displaySubject %>" />
+						<label>Задание</label>
+						<textarea name="homework"><%= a.homework %></textarea>
+						<div class="grid-2">
+							<div>
+								<label>Дедлайн</label>
+								<input type="datetime-local" name="dueDate" value="<%= (new Date(a.dueDate)).toISOString().slice(0,16) %>" />
+							</div>
+							<div>
+								<label>Доп. дедлайн</label>
+								<input type="datetime-local" name="extendedDueDate" value="<%= a.extendedDueDate ? (new Date(a.extendedDueDate)).toISOString().slice(0,16) : '' %>" />
+							</div>
+						</div>
+						<label>Штраф (баллы)</label>
+						<input type="number" name="extendedPenalty" value="<%= a.extendedPenalty || '' %>" />
+						<div style="margin-top:8px; display:flex; gap:8px;">
+							<button class="btn" type="submit">Сохранить</button>
+						</div>
+					</form>
+					<form class="inline" method="post" action="/assignments/<%= a.id %>/delete" onsubmit="return confirm('Удалить задание?')">
+						<button class="btn danger" type="submit">Удалить</button>
+					</form>
+					<% if (a.createdAt) { %><div><small class="muted">Добавлено: <%= new Date(a.createdAt).toLocaleString() %></small></div><% } %>
+				</div>
+			<% }) %>
+		</div>
+		<div class="card">
+			<div class="section-title"><h3>3. Дедлайны</h3></div>
+			<% if (!assignments.length) { %>
+				<p><small class="muted">Нет дедлайнов в выбранную неделю</small></p>
+			<% } %>
+			<% assignments.forEach(a => { %>
+				<div style="border-bottom:1px solid #eee; padding:8px 0;">
+					<div><strong><%= a.homework %></strong> — срок: <strong><%= new Date(a.dueDate).toLocaleString() %></strong></div>
+					<% if (a.extendedDueDate) { %>
+						<div>доп. срок: <strong><%= new Date(a.extendedDueDate).toLocaleString() %></strong> <%= a.extendedPenalty ? '(штраф: -' + a.extendedPenalty + ' б.)' : '' %></div>
+					<% } %>
+					<small class="muted"><%= a.displaySubject %> • <%= a.groupName %></small>
+				</div>
+			<% }) %>
+		</div>
+		<div class="card">
+			<div class="section-title"><h3>4. Мероприятия</h3></div>
+			<% if (!events.length) { %>
+				<p><small class="muted">Пока нет мероприятий в выбранную неделю</small></p>
+			<% } %>
+			<% events.forEach(e => { const mine = e.subject === mySubject; %>
+				<div style="border-bottom:1px solid #eee; padding:8px 0;" class="<%= mine ? 'highlight' : '' %>">
+					<div><strong><%= e.title %></strong> <%= mine ? '<span class="badge teacher">моё</span>' : '' %></div>
+					<div><small class="muted"><%= e.date %> • <%= e.startTime %>-<%= e.endTime %></small></div>
+					<% if (e.subject) { %><div><span class="badge"><%= e.subject %></span> <small class="muted">/ <%= e.groupName || 'все группы' %></small></div><% } %>
+					<% if (e.description) { %><div><small><%= e.description %></small></div><% } %>
+					<% if (e.createdAt) { %><div><small class="muted">Добавлено: <%= e.createdAt %></small></div><% } %>
+				</div>
+			<% }) %>
+		</div>
+	</div>
+</div>
+<script src="/theme.js"></script>
+</body>
+</html>

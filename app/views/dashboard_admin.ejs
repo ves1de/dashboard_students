@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title><%= title %></title>
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+	<div>Дашборд администратора</div>
+	<div class="nav">
+		<form class="inline" method="get" action="/dashboard" style="display:flex;align-items:center;gap:8px;">
+			<input type="hidden" name="offset" value="<%= offset %>">
+			<button class="btn secondary" name="dir" value="prev">«</button>
+			<input type="number" name="amount" value="<%= amount || 1 %>" min="1" style="width:64px">
+			<span><small class="muted">Неделя: <%= weekRangeLabel %></small></span>
+			<button class="btn secondary" name="dir" value="next">»</button>
+		</form>
+		<button class="btn link" id="themeToggle" type="button" title="Переключить тему">🌙</button>
+		<a href="https://uni-dubna.ru/" target="_blank" rel="noopener" class="btn link">Университет</a>
+		<span><small class="muted"><%= currentUser.fullName %></small></span>
+		<a href="/logout">Выйти</a>
+	</div>
+</header>
+<div class="container">
+	<div class="grid-2">
+		<div class="card">
+			<div class="section-title"><h3>1. Полное расписание</h3></div>
+			<% const dayOrder = ['mon','tue','wed','thu','fri','sat','sun']; const dayLabel = {mon:'Пн',tue:'Вт',wed:'Ср',thu:'Чт',fri:'Пт',sat:'Сб',sun:'Вс'}; %>
+			<% dayOrder.forEach(d => { const items = schedule.filter(s => s.dayOfWeek === d); if (!items.length) return; %>
+				<h4><%= dayLabel[d] %></h4>
+				<table class="table">
+					<thead><tr><th>Время</th><th>Предмет</th><th>Группа</th><th>Ауд./Преп.</th><th></th></tr></thead>
+					<tbody>
+						<% items.forEach(it => { %>
+							<tr>
+								<td><%= it.startTime %> - <%= it.endTime %></td>
+								<td><%= it.subject %></td>
+								<td><%= it.groupName %></td>
+								<td><small class="muted"><%= it.room || '-' %> • <%= it.teacherName || '-' %></small></td>
+								<td>
+									<form class="inline" method="post" action="/schedule/<%= it.id %>/delete" onsubmit="return confirm('Удалить пару?')">
+										<button class="btn danger" type="submit">Удалить</button>
+									</form>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="5">
+									<form method="post" action="/schedule/<%= it.id %>/update" class="grid-4">
+										<div>
+											<label>День</label>
+											<select name="dayOfWeek">
+												<option value="mon" <%= it.dayOfWeek==='mon'?'selected':'' %>>Пн</option>
+												<option value="tue" <%= it.dayOfWeek==='tue'?'selected':'' %>>Вт</option>
+												<option value="wed" <%= it.dayOfWeek==='wed'?'selected':'' %>>Ср</option>
+												<option value="thu" <%= it.dayOfWeek==='thu'?'selected':'' %>>Чт</option>
+												<option value="fri" <%= it.dayOfWeek==='fri'?'selected':'' %>>Пт</option>
+												<option value="sat" <%= it.dayOfWeek==='sat'?'selected':'' %>>Сб</option>
+												<option value="sun" <%= it.dayOfWeek==='sun'?'selected':'' %>>Вс</option>
+											</select>
+										</div>
+										<div>
+											<label>Начало</label>
+											<input type="time" name="startTime" value="<%= it.startTime %>" />
+										</div>
+										<div>
+											<label>Конец</label>
+											<input type="time" name="endTime" value="<%= it.endTime %>" />
+										</div>
+										<div>
+											<label>Предмет</label>
+											<input name="subject" value="<%= it.subject %>" />
+										</div>
+										<div>
+											<label>Группа (4 цифры)</label>
+										<input name="groupName" value="<%= it.groupName %>" pattern="[0-9]{4}" />
+										</div>
+										<div>
+											<label>Аудитория</label>
+											<input name="room" value="<%= it.room || '' %>" />
+										</div>
+										<div>
+											<label>Преподаватель</label>
+											<input name="teacherName" value="<%= it.teacherName || '' %>" />
+										</div>
+										<div style="display:flex;align-items:end">
+											<button class="btn" type="submit">Сохранить</button>
+										</div>
+									</form>
+								</td>
+							</tr>
+						<% }) %>
+					</tbody>
+				</table>
+			<% }) %>
+			<h4 style="margin-top:12px;">Добавить пару</h4>
+			<form method="post" action="/schedule/create" class="grid-4">
+				<div>
+					<label>День</label>
+					<select name="dayOfWeek" required>
+						<option value="mon">Пн</option>
+						<option value="tue">Вт</option>
+						<option value="wed">Ср</option>
+						<option value="thu">Чт</option>
+						<option value="fri">Пт</option>
+						<option value="sat">Сб</option>
+						<option value="sun">Вс</option>
+					</select>
+				</div>
+				<div>
+					<label>Начало</label>
+					<input type="time" name="startTime" required />
+				</div>
+				<div>
+					<label>Конец</label>
+					<input type="time" name="endTime" required />
+				</div>
+				<div>
+					<label>Предмет</label>
+					<input name="subject" required />
+				</div>
+				<div>
+					<label>Группа (4 цифры)</label>
+					<input name="groupName" required pattern="[0-9]{4}" />
+				</div>
+				<div>
+					<label>Аудитория</label>
+					<input name="room" />
+				</div>
+				<div>
+					<label>Преподаватель</label>
+					<input name="teacherName" />
+				</div>
+				<div style="display:flex;align-items:end">
+					<button class="btn" type="submit">Добавить</button>
+				</div>
+			</form>
+		</div>
+		<div class="card">
+			<div class="section-title"><h3>2. Мероприятия (CRUD)</h3></div>
+			<h4>Добавить мероприятие</h4>
+			<form method="post" action="/events/create">
+				<label>Название</label>
+				<input name="title" required />
+				<label>Описание</label>
+				<textarea name="description"></textarea>
+				<div class="grid-3">
+					<div>
+						<label>Дата</label>
+						<input type="date" name="date" required />
+					</div>
+					<div>
+						<label>Начало</label>
+						<input type="time" name="startTime" required />
+					</div>
+					<div>
+						<label>Конец</label>
+						<input type="time" name="endTime" required />
+					</div>
+				</div>
+				<label>Привязать к паре (опц., влияет на подсветку у препода)</label>
+				<select name="scheduleId">
+					<option value="">— без привязки —</option>
+					<% schedule.forEach(s => { %>
+						<option value="<%= s.id %>"><%= s.subject %> • <%= s.groupName %> • <%= s.dayOfWeek %> • <%= s.startTime %>-<%= s.endTime %></option>
+					<% }) %>
+				</select>
+				<label>Группа (опц., если не указана — для всех)</label>
+				<input name="groupName" />
+				<div style="margin-top:8px"><button class="btn" type="submit">Создать</button></div>
+			</form>
+
+			<h4 style="margin-top:16px;">Список</h4>
+			<% if (!events.length) { %>
+				<p><small class="muted">Пока нет мероприятий в выбранную неделю</small></p>
+			<% } %>
+			<% events.forEach(e => { %>
+				<div style="border-bottom:1px solid #eee; padding:8px 0;">
+					<form class="inline" method="post" action="/events/<%= e.id %>/update">
+						<label>Название</label>
+						<input name="title" value="<%= e.title %>" />
+						<label>Описание</label>
+						<textarea name="description"><%= e.description || '' %></textarea>
+						<div class="grid-3">
+							<div>
+								<label>Дата</label>
+								<input type="date" name="date" value="<%= e.date %>" />
+							</div>
+							<div>
+								<label>Начало</label>
+								<input type="time" name="startTime" value="<%= e.startTime %>" />
+							</div>
+							<div>
+								<label>Конец</label>
+								<input type="time" name="endTime" value="<%= e.endTime %>" />
+							</div>
+						</div>
+						<label>Привязка к паре</label>
+						<select name="scheduleId">
+							<option value="">— без привязки —</option>
+							<% schedule.forEach(s => { %>
+								<option value="<%= s.id %>" <%= e.scheduleId === s.id ? 'selected' : '' %>><%= s.subject %> • <%= s.groupName %> • <%= s.dayOfWeek %> • <%= s.startTime %>-<%= s.endTime %></option>
+							<% }) %>
+						</select>
+						<label>Группа</label>
+						<input name="groupName" value="<%= e.groupName || '' %>" />
+						<div style="margin-top:8px; display:flex; gap:8px;">
+							<button class="btn" type="submit">Сохранить</button>
+						</div>
+					</form>
+					<form class="inline" method="post" action="/events/<%= e.id %>/delete" onsubmit="return confirm('Удалить мероприятие?')">
+						<button class="btn danger" type="submit">Удалить</button>
+					</form>
+					<% if (e.createdAt) { %><div><small class="muted">Добавлено: <%= e.createdAt %></small></div><% } %>
+				</div>
+			<% }) %>
+		</div>
+	</div>
+</div>
+<script src="/theme.js"></script>
+</body>
+</html>

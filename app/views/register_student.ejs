@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title><%= title %></title>
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+	<div>Регистрация студента</div>
+	<div class="nav">
+		<button class="btn link" id="themeToggle" type="button" title="Переключить тему">🌙</button>
+		<a href="https://uni-dubna.ru/" target="_blank" rel="noopener" class="btn link">Университет</a>
+		<a href="/">Домой</a>
+		<a href="/login">Войти</a>
+	</div>
+</header>
+<div class="container">
+	<div class="card" style="max-width:600px; margin:0 auto;">
+		<h2>Студент</h2>
+		<% if (error) { %>
+			<p style="color:#dc2626"><%= error %></p>
+		<% } %>
+		<form method="post" action="/register/student">
+			<label>ФИО</label>
+			<input name="fullName" required />
+			<label>Группа</label>
+			<input name="groupName" required />
+			<label>Почта</label>
+			<input type="email" name="email" required />
+			<label>Логин</label>
+			<input name="login" required />
+			<label>Пароль</label>
+			<input type="password" name="password" required />
+			<div style="margin-top:12px; display:flex; gap:8px;">
+				<button class="btn" type="submit">Создать аккаунт</button>
+				<a class="btn secondary" href="/register">Назад</a>
+			</div>
+		</form>
+	</div>
+</div>
+<script src="/theme.js"></script>
+</body>
+</html>

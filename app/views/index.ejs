@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title><%= title %></title>
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div class="hero" style="background-image: url('/R.jpg'), radial-gradient(1200px 400px at -10% -10%, #1b2552 0%, transparent 60%), radial-gradient(1200px 400px at 110% -10%, #1b2552 0%, transparent 60%), radial-gradient(1000px 500px at 50% 120%, #13204a 0%, transparent 70%), linear-gradient(180deg, #0f172a 0%, #0a1022 100%);">
+	<div class="content">
+		<h1>Университетский портал</h1>
+		<p>Расписание, задания и мероприятия — в одном месте</p>
+		<div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+			<a class="btn lg" href="/dashboard">Войти в дашборд</a>
+			<a class="btn secondary lg" href="/register">Регистрация</a>
+		</div>
+	</div>
+</div>
+<!-- Главная без верхней панели; тема можно переключать на внутренних страницах -->
+<script src="/theme.js"></script>
+</body>
+</html>
